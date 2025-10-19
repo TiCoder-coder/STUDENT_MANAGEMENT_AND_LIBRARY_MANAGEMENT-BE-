@@ -2,8 +2,8 @@ from services.enrollmentsService import EnrollmentService
 from auth import current_user
 
 # ENROLLMENT MENU
-def enrollment_menu(db, current_user):    
-    svc = EnrollmentService(db)
+def enrollment_menu(service, current_user):
+    svc = service
 
     while True:
         print("\n=== ENROLLMENT MENU ===")
@@ -23,7 +23,7 @@ def enrollment_menu(db, current_user):
             else:
                 print("Invalid choice, please try again.")
         else:
-            # Khi đã login (Teacher mode)
+            # Khi da login (Teacher mode)
             print("1. Add Enrollment")
             print("2. Delete Enrollment")
             print("3. Update Enrollment")

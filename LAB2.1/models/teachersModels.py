@@ -1,6 +1,6 @@
 import re
 from datetime import datetime
-import bcrypt                                                                  # Khai bao thu vien dung de hash mat khau 
+import bcrypt                                                              # Khai bao thu vien dung de hash mat khau 
 # TAO MOT DANH SACH CAC NHA MANG DUNG DE KIEM TRA SO DIEN THOAI CO HOP LE KHONG --- CO XU LI SO BAN VA SO MAY------------
 NHA_MANG_DI_DONG = {
     'Viettel': ('096', '097', '098', '086', '032', '033', '034', '035', '036', '037', '038', '039'),

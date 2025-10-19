@@ -1,4 +1,3 @@
-# enums/enums.py
 from enum import Enum
 
 # Trang thai cua cac cuon sach

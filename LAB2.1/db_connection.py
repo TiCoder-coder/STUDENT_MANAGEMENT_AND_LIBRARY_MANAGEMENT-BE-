@@ -79,6 +79,6 @@ class Database:
         try:
             if self.conn and self.conn.is_connected():
                 self.conn.close()
-                print("🔌 Database connection closed.")
+                print("Database connection closed.")
         except:
             pass

@@ -66,7 +66,7 @@ def add_course_view(svc):
 
 # Tim kiem khoa hoc
 def search_course_view(svc: CourseService):
-    print("\n=== 🔍 SEARCH COURSE ===")
+    print("\n=== SEARCH COURSE ===")
     course_id = input("Enter course ID: ").strip()
     result = svc.search_course(course_id)
 

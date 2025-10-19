@@ -1,14 +1,14 @@
 from datetime import datetime
 from enums.enums import BookStatus, BookType, EducationLevel
 
-# CLASS BOOK: DÙNG ĐỂ QUẢN LÝ THÔNG TIN CỦA CÁC CUỐN SÁCH --------------------------------------------------------------
+# CLASS BOOK: DUNG DE QUAN LI THONG TIN CUA CAC CUON SACH --------------------------------------------------------------
 class Book:
 
     def __init__(self, title, author, pages, publish_year,
                  book_type, status=BookStatus.AVAILABLE,
                  genre=None, subject=None, level=None, field=None,
                  created_at=None, book_id=None):
-        # Các thuộc tính cơ bản của sách
+        # Cac thuoc tinh co ban cua sach
         self.book_id = book_id
         self.title = title
         self.author = author
@@ -23,26 +23,26 @@ class Book:
         self.level = level        # cho textbook (primary/secondary/highschool)
         self.field = field        # cho science
 
-        # Tự động tạo created_at nếu không có
+        # Tu dong tao ra ngay tao neu khong nhap
         self.created_at = created_at or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     # Ham dung de them mot book vao database ---------------------------------------------------------------------------------
     def add_book(self, db):
         try:
-            # 1) Validate book_id (nếu có) xem da ton tai chua
+            # Kiem tra xem book_id da ton tai chua --- Neu ton tai -> False
             if self.book_id:
                 existing = db.fetch_one("SELECT * FROM books WHERE book_id=%s", (self.book_id,))
                 if existing:
                     return "[ERROR] Book ID already exists."
 
-            # 2) Validate pages > 0
+            # Kiem tra page phai lon hon 0
             try:
                 if int(self.pages) <= 0:
                     return "[ERROR] Pages must be greater than 0."
             except Exception:
                 return "[ERROR] Pages must be an integer greater than 0."
 
-            # 3) Validate publish_year <= current year
+            # Kiem tra publish year phai nho hon hoac bang nam hien tai
             current_year = datetime.now().year
             try:
                 if int(self.publish_year) > current_year:
@@ -50,38 +50,34 @@ class Book:
             except Exception:
                 return "[ERROR] publish_year must be an integer."
 
-            # 4) Validate book_type using enums
+            # Kiem tra book_type --- Su dung class da tao trong enum 
             bt_value = None
             if isinstance(self.book_type, BookType):
                 bt_value = self.book_type.value
             else:
-                # allow passing string like 'novel'
                 try:
                     bt_value = BookType(self.book_type).value
                 except Exception:
-                    # try map from string
                     valid = [e.value for e in BookType]
                     return f"[ERROR] Invalid book_type. Valid types: {valid}"
 
-            # 5) Validate status using enums
+            # Kiem tra status cua cuon sach --- Su dung class da tao trong enum
             st_value = None
             if isinstance(self.status, BookStatus):
                 st_value = self.status.value
             else:
-                # allow integer or string that maps to enum name/value
                 if isinstance(self.status, int):
                     if self.status in [s.value for s in BookStatus]:
                         st_value = self.status
                     else:
                         return f"[ERROR] Invalid status. Valid statuses: {[s.value for s in BookStatus]}"
                 else:
-                    # maybe user passed enum name like 'AVAILABLE'
                     try:
                         st_value = BookStatus[self.status].value
                     except Exception:
                         return f"[ERROR] Invalid status. Valid statuses: {[s.value for s in BookStatus]}"
 
-            # 6) Validate level if provided (must be in EducationLevel)
+            # Kiem tra sach danh cho level nao (level do phai nam trong enum)
             level_value = None
             if self.level:
                 if isinstance(self.level, EducationLevel):
@@ -93,7 +89,7 @@ class Book:
                         valid_levels = [e.value for e in EducationLevel]
                         return f"[ERROR] Invalid level. Valid levels: {valid_levels}"
 
-            # 7) Prepare SQL INSERT (chỉ insert các cột phù hợp)
+            # Luu vao database
             sql = """
                 INSERT INTO books
                 (title, author, pages, publish_year, status, book_type, genre, subject, level, field, created_at)
@@ -119,27 +115,32 @@ class Book:
             return f"[ERROR] Failed to add book: {e}"
 
     # Ham dung de tim kiem thong tin sach theo cac tieu chi (id, title, author, type, status) -------------------------------
-        # Ham dung de tim kiem thong tin sach theo cac tieu chi (id, title, author, type, status) -------------------------------
+    # Ham dung de tim kiem thong tin sach theo cac tieu chi (id, title, author, type, status) -------------------------------
     @staticmethod
     def search_books(db, book_id=None, title=None, author=None, book_type=None, status=None):
         try:
+            # Co the tim kiem bang nhieu phuong thuc khac nhau
             sql = "SELECT * FROM books WHERE 1=1"
             params = []
-
+            
+            # Tim kiem bang book_id
             if book_id:
                 sql += " AND book_id=%s"
                 params.append(book_id)
 
+            # Tim kiem bang title
             if title:
                 title = title.strip().lower()
                 sql += " AND LOWER(title) LIKE %s"
                 params.append(f"%{title}%")
 
+            # Tim kiem bang author
             if author:
                 author = author.strip().lower()
                 sql += " AND LOWER(author) LIKE %s"
                 params.append(f"%{author}%")
 
+            # Tim kiem bang book type
             if book_type:
                 book_type = book_type.strip().lower()
                 try:
@@ -151,6 +152,7 @@ class Book:
                     print(f"[VALIDATION] Invalid book_type. Valid types: {valid}")
                     return []
 
+            # Tim kiem bang status
             if status is not None and status != "":
                 try:
                     st_val = status.value if isinstance(status, BookStatus) else int(status)
@@ -163,7 +165,7 @@ class Book:
                     print("[VALIDATION] Invalid status format.")
                     return []
 
-            # Thực thi truy vấn
+            # Thuc thi truy van
             return db.fetch_all(sql, tuple(params))
         except Exception as e:
             print(f"[MODEL ERROR] search_books failed: {e}")
@@ -188,14 +190,20 @@ class Book:
             if not existing:
                 return "[ERROR] Book ID not found."
 
+            # Tao ra 2 list dung de luu cac thong tin muon cap nhap (va thong tin muon cap nhap phai dung)
             fields, params = [], []
 
+            # Title
             if title:
                 fields.append("title=%s")
                 params.append(title)
+                
+            # Author
             if author:
                 fields.append("author=%s")
                 params.append(author)
+            
+            # Page
             if pages is not None:
                 try:
                     if int(pages) <= 0:
@@ -204,6 +212,8 @@ class Book:
                     params.append(int(pages))
                 except Exception:
                     return "[ERROR] Pages must be an integer greater than 0."
+            
+            # publish_year
             if publish_year is not None:
                 try:
                     current_year = datetime.now().year
@@ -213,7 +223,7 @@ class Book:
                     params.append(int(publish_year))
                 except Exception:
                     return "[ERROR] publish_year must be an integer."
-
+            # Book type
             if book_type:
                 try:
                     bt_val = book_type.value if isinstance(book_type, BookType) else BookType(book_type).value
@@ -223,8 +233,9 @@ class Book:
                     valid = [e.value for e in BookType]
                     return f"[ERROR] Invalid book_type. Valid types: {valid}"
 
+            # Status
             if status is not None:
-                # status can be enum or int
+                # Status co the la trong enum hoac 1 so trong enum ( 0 1 2)
                 try:
                     if isinstance(status, BookStatus):
                         st_val = status.value
@@ -237,12 +248,17 @@ class Book:
                 except Exception:
                     return f"[ERROR] Invalid status value."
 
+            # Genre
             if genre is not None:
                 fields.append("genre=%s")
                 params.append(genre)
+                
+            # Subject    
             if subject is not None:
                 fields.append("subject=%s")
                 params.append(subject)
+            
+            # Level
             if level is not None:
                 try:
                     lvl_val = level.value if isinstance(level, EducationLevel) else EducationLevel(level).value
@@ -251,6 +267,8 @@ class Book:
                 except Exception:
                     valid_levels = [e.value for e in EducationLevel]
                     return f"[ERROR] Invalid level. Valid levels: {valid_levels}"
+            
+            # kiem tra neu field co gia tri thi thuc hien cap nhap
             if field is not None:
                 fields.append("field=%s")
                 params.append(field)

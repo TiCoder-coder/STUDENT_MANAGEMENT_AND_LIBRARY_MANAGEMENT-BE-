@@ -1,23 +1,12 @@
-# /home/voanhnhat/Documents/LAB_2/LAB2.2/views/main_menu.py
-# ---------------------------------------------------------------------------------------------------
-# MODULE: main_menu.py
-# MÔ TẢ:
-#   - Đây là giao diện menu chính của hệ thống Library Management System.
-#   - Giao diện chia làm 2 phần: 
-#       + Guest (người chưa đăng nhập)
-#       + Manager và Member (đã đăng nhập, có quyền khác nhau)
-#   - Giao diện được chia nhỏ, gọi đến các view khác như booksView, borrowsView, managersView, membersView.
-# ---------------------------------------------------------------------------------------------------
-
 from views import booksView, borrowsView, managersView, membersView
 from auth import login, logout, current_user
 
 # ---------------------------------------------------------------------------------------------------
-# MENU KHÁCH (CHƯA ĐĂNG NHẬP)
+# MENU KHÁCH (CHUA DANG NHAP)
 # ---------------------------------------------------------------------------------------------------
 def guest_menu(db):
     while True:
-        print("\n=== 📚 LIBRARY MANAGEMENT SYSTEM ===")
+        print("\n=== LIBRARY MANAGEMENT SYSTEM ===")
         print("--------------------------------------")
         print("1. View Books")
         print("2. Login to System")
@@ -28,41 +17,41 @@ def guest_menu(db):
         if choice == "1":
             booksView.view_books(db)
         elif choice == "2":
-            if login(db):  # Nếu đăng nhập thành công thì chuyển sang main menu
+            if login(db):  # Neu dang nhap thanh cong thi chuyen sang main menu
                 main_menu(db)
         elif choice == "0":
-            print("👋 Goodbye!")
+            print("Goodbye!")
             break
         else:
-            print("❌ Invalid choice, please try again.")
+            print("Invalid choice, please try again.")
 
 
 # ---------------------------------------------------------------------------------------------------
-# MENU CHÍNH SAU KHI ĐĂNG NHẬP (Manager hoặc Member)
+# MENU CHINH SAU KHI DANG NHAP
 # ---------------------------------------------------------------------------------------------------
 def main_menu(db):
     role = current_user.get("role", "guest")
 
-    # Hiển thị thông tin người dùng hiện tại
-    print(f"\n🔑 Logged in as: {role.capitalize()} ({current_user['username']})")
+    # Hien thi thong tin nguoi dung hien tai
+    print(f"\nLogged in as: {role.capitalize()} ({current_user['username']})")
 
-    # Manager có quyền cao nhất: quản lý sách, mượn sách, member, manager
+    # Manager co quyen cao nhat -- co the thuc hien day du chuc nang crud
     if role == "manager":
         manager_main_menu(db)
-    # Member chỉ có quyền quản lý mượn sách và xem sách
+    # Member chi co quyen muon va xem sach
     elif role == "member":
         member_main_menu(db)
     else:
-        print("⚠️ Invalid role or unauthorized access.")
+        print("Invalid role or unauthorized access.")
         logout()
 
 
 # ---------------------------------------------------------------------------------------------------
-# MENU DÀNH CHO MANAGER (ADMIN)
+# MENU DANH CHO MANAGER 
 # ---------------------------------------------------------------------------------------------------
 def manager_main_menu(db):
     while True:
-        print("\n=== 🧑‍💼 MANAGER DASHBOARD ===")
+        print("\n=== MANAGER DASHBOARD ===")
         print(f"Current User: {current_user['username']}")
         print("--------------------------------------")
         print("1. Manage Books")
@@ -84,7 +73,7 @@ def manager_main_menu(db):
             managersView.manager_menu(db, current_user)
         elif choice == "5":
             logout()
-            print("🔒 Logged out successfully.")
+            print("Logged out successfully.")
             break
         elif choice == "0":
             print("↩ Returning to guest mode...")
@@ -92,15 +81,15 @@ def manager_main_menu(db):
             guest_menu(db)
             break
         else:
-            print("❌ Invalid choice, please try again.")
+            print("Invalid choice, please try again.")
 
 
 # ---------------------------------------------------------------------------------------------------
-# MENU DÀNH CHO MEMBER (NGƯỜI DÙNG THƯỜNG)
+# MENU DANH CHO MEMEBER
 # ---------------------------------------------------------------------------------------------------
 def member_main_menu(db):
     while True:
-        print("\n=== 👤 MEMBER DASHBOARD ===")
+        print("\n=== MEMBER DASHBOARD ===")
         print(f"Current User: {current_user['username']}")
         print("--------------------------------------")
         print("1. View Books")
@@ -122,12 +111,12 @@ def member_main_menu(db):
             borrowsView.return_book(db, current_user)
         elif choice == "5":
             logout()
-            print("🔒 Logged out successfully.")
+            print("Logged out successfully.")
             break
         elif choice == "0":
-            print("↩ Returning to guest mode...")
+            print("Returning to guest mode...")
             logout()
             guest_menu(db)
             break
         else:
-            print("❌ Invalid choice, please try again.")
+            print("Invalid choice, please try again.")

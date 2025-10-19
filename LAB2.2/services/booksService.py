@@ -1,23 +1,22 @@
-# services/booksService.py
 from models.booksModel import Book
 from enums.enums import BookStatus, BookType, EducationLevel
-from auth import require_manager  # Kiểm tra quyền (manager/admin)
+from auth import require_manager  # Khai bao mot ham trong auth dung de kiem tra quyen truy cap (manager/admin)
 
 class BookService:
     def __init__(self, db):
         self.db = db
 
-    # Nhận một dict data (tương thích với views hiện tại)
+    # Dung de them mot book vao he thong  --- Chi co manager moi duoc tao
     def add_book(self, data: dict):
         try:
-            # Kiểm tra quyền (nếu không đủ -> require_manager sẽ ném PermissionError hoặc trả về False)
+            # Kiem tra quyen co phai la admin/manager khong
             try:
                 require_manager()
             except PermissionError as e:
                 print(f"[AUTH ERROR] {e}")
                 return
 
-            # Chuẩn hoá/ép kiểu input
+            # Chuan hoa lai cac input
             title = data.get("title")
             author = data.get("author")
             pages = data.get("pages")
@@ -35,7 +34,7 @@ class BookService:
             title = title.strip().title() if isinstance(title, str) else title
             author = author.strip().title() if isinstance(author, str) else author
 
-            # pages / publish_year -> int (nếu có). Model sẽ kiểm tra thêm.
+            # pages / publish_year -> int (neu co)
             try:
                 if pages is not None and pages != "":
                     pages = int(pages)
@@ -50,8 +49,8 @@ class BookService:
                 print("[VALIDATION] 'publish_year' must be an integer.")
                 return
 
-            # Nếu view truyền enum (BookType, BookStatus), giữ nguyên; nếu truyền object enum value, model xử lý.
-            # Tạo object Book và gọi model.add_book
+            # Neu view truyen enum (BookType, BookStatus), giu nguyen; neu truyen object enum value, model xu ly.
+            # Tao object Book va goi model.add_book
             book = Book(
                 title=title,
                 author=author,
@@ -74,7 +73,7 @@ class BookService:
         except Exception as e:
             print(f"[SERVICE ERROR] Failed to add book: {e}")
 
-    # Trả về rows (list) để views dùng (không in ở đây)
+    # Tra va danh sach cac cuon sach
     def get_all_books(self):
         try:
             return Book.get_all_books(self.db)
@@ -82,7 +81,7 @@ class BookService:
             print(f"[SERVICE ERROR] Failed to fetch books: {e}")
             return []
 
-    # Hàm cũ vẫn giữ (xuất ra màn hình) — nhưng view có thể dùng get_all_books nếu cần xử lý khác
+    # Su dung lai ham get_all_books nhung dinh dang lai kieu in ra cho dep hon
     def list_books(self):
         try:
             rows = Book.get_all_books(self.db)
@@ -116,7 +115,7 @@ class BookService:
         except Exception as e:
             print(f"[SERVICE ERROR] Failed to list books: {e}")
 
-    # search_books trả về list để view hiển thị; model search_books đã chuẩn hoá LOWER search
+    # Ham dung de tim kiem mot cuon sach
     def search_books(self, filters: dict):
         try:
             book_id = filters.get("book_id")
@@ -140,6 +139,7 @@ class BookService:
             print(f"[SERVICE ERROR] Failed to search books: {e}")
             return []
 
+    # Ham dung de update mot cuon sach --- Chi co manager moi duoc cap nhap
     def update_book(self, book_id: str, data: dict):
         try:
             try:
@@ -168,6 +168,7 @@ class BookService:
         except Exception as e:
             print(f"[SERVICE ERROR] Failed to update book: {e}")
 
+    # Ham dung de delete mot cuon sach --- Chi co manager moi duoc xoa
     def delete_book(self, book_id: str):
         try:
             try:

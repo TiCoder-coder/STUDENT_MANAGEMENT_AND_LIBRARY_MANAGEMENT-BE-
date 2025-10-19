@@ -1,4 +1,3 @@
-# FILE: views/borrowsView.py
 from services.borrowsService import BorrowsService
 from auth import current_user
 
@@ -10,7 +9,6 @@ def borrows_menu(db, current_user):
     while True:
         print("\n=== BORROW MANAGEMENT MENU ===")
 
-        # Nếu là member (chưa đăng nhập hoặc không có quyền manager)
         if not current_user["role"] or current_user["role"] != "manager":
             print("1. Search Borrow")
             print("2. List All Borrows")
@@ -30,7 +28,6 @@ def borrows_menu(db, current_user):
             else:
                 print("Invalid choice, please try again.")
         else:
-            # Nếu là manager (được phép thao tác thêm, sửa, xóa, trả)
             print("1. Add Borrow (Borrow Book)")
             print("2. Return Book")
             print("3. Update Borrow Info")
@@ -65,6 +62,7 @@ def borrows_menu(db, current_user):
 # ================================ ADD BORROW (MANAGER) =================================
 def add_borrow_view(svc: BorrowsService):
     print("\n=== ADD NEW BORROW (Borrow Book) ===")
+    borrow_id = input("Borrow ID: ").strip()
     member_id = input("Member ID: ").strip()
     book_id = input("Book ID: ").strip()
     borrow_date = input("Borrow Date (YYYY-MM-DD, press Enter for today): ").strip() or None
@@ -72,6 +70,7 @@ def add_borrow_view(svc: BorrowsService):
     return_date = input("Return Date (optional, YYYY-MM-DD): ").strip() or None
 
     data = {
+        "borrow_id": borrow_id,
         "member_id": member_id,
         "book_id": book_id,
         "borrow_date": borrow_date,

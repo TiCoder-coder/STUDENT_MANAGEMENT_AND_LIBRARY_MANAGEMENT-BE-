@@ -108,13 +108,25 @@ class Student:
     @staticmethod
     def search_student(db, studentId):
         try:
-            # Tra ve thong tin cua sinh vien can tim kiem
-            return db.fetch_all("SELECT * FROM students WHERE studentId=%s", (studentId,))
-        
-        # Bat loi tim kiem
+            # Kiem tra studentId co rong khong
+            if not studentId:
+                print("[VALIDATION] Student ID cannot be empty.")
+                return []
+
+            # Neu studentId chi toan chu --> Bao loi 
+            if not re.match(r'^\d+$', studentId):
+                print("[VALIDATION] Student ID must be numeric.")
+                return []
+
+
+            # Truy van mysql
+            result = db.fetch_all("SELECT * FROM students WHERE studentId = %s", (studentId.strip(),))
+            return result
+
         except Exception as e:
             print(f"[ERROR] Failed to search student: {e}")
             return []
+
 
     # Ham dung de lay thong tin cua tat ca cac sinh vien -----------------------------------------------------------------
     @staticmethod

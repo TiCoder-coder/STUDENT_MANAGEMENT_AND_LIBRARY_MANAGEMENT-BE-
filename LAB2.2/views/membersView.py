@@ -1,20 +1,15 @@
-# ============================================
-# File: views/membersView.py
-# Description: View hiển thị và thao tác với MEMBER trong thư viện
-# ============================================
-
 from services.membersService import MemberService
 from auth import current_user, require_manager
 
 
 # --------------------------------------------
-# MENU CHÍNH CỦA MEMBER
+# MENU CHINH CUA MEMBER
 # --------------------------------------------
 def member_menu(db, current_user):
 
     svc = MemberService(db)
 
-    # --- GUEST MODE (Không phải teacher) ---
+    # --- GUEST MODE (Member mode) ---
     if not current_user or not isinstance(current_user, dict) or current_user.get("role") not in ["manager", "admin"]:
 
         print("\n=== MEMBER MENU (Guest Mode) ===")
@@ -34,7 +29,7 @@ def member_menu(db, current_user):
                 print("Invalid choice, try again.")
         return
 
-    # --- TEACHER MODE ---
+    # --- MANAGER MODE ---
     while True:
         print("\n=== MEMBER MENU (Teacher Mode) ===")
         print("1. Add member")
@@ -63,7 +58,7 @@ def member_menu(db, current_user):
 
 
 # --------------------------------------------
-# HIỂN THỊ DANH SÁCH MEMBER
+# HIEN THI DANH SACH MEMBER
 # --------------------------------------------
 def list_members_view(svc: MemberService):
     print("\n=== MEMBER LIST ===")
@@ -77,17 +72,17 @@ def list_members_view(svc: MemberService):
             print(f"ID: {m['member_id']}, Name: {m['name']}, Birthday: {m['birthday']}, "
                   f"Email: {m['email']}, Phone: {m['phoneNumber']}")
         else:
-            # Trong trường hợp kết quả trả về là tuple (tuỳ DB)
             print(f"ID: {m[0]}, Name: {m[1]}, Birthday: {m[2]}, "
                   f"Email: {m[3]}, Phone: {m[4]}")
 
 
 # --------------------------------------------
-# THÊM MỘT MEMBER MỚI (Teacher Only)
+# THEM MOT MEMBER MOI (CHI MANAGER MOI DUOC THEM)
 # --------------------------------------------
 def add_member_view(svc: MemberService):
     print("\n=== ADD MEMBER ===")
     data = {
+        "member_id": input("Member id: ").strip(),
         "name": input("Full Name: ").strip(),
         "birthday": input("Birthday (YYYY-MM-DD): ").strip(),
         "email": input("Email: ").strip(),
@@ -97,7 +92,7 @@ def add_member_view(svc: MemberService):
 
 
 # --------------------------------------------
-# CẬP NHẬT THÔNG TIN MEMBER (Teacher Only)
+# CAP NHAP THONG TIN TIN MEMBER (CHI MANAGER MOI DUOC THEM)
 # --------------------------------------------
 def update_member_view(svc: MemberService):
     print("\n=== UPDATE MEMBER ===")
@@ -112,7 +107,7 @@ def update_member_view(svc: MemberService):
 
 
 # --------------------------------------------
-# XÓA MEMBER (Teacher Only)
+# XOA MEMBER  (CHI MANAGER MOI DUOC THEM)
 # --------------------------------------------
 def delete_member_view(svc: MemberService):
     print("\n=== DELETE MEMBER ===")
@@ -121,7 +116,7 @@ def delete_member_view(svc: MemberService):
 
 
 # --------------------------------------------
-# TÌM KIẾM MEMBER
+# TIM KIEM MEMBER
 # --------------------------------------------
 def search_member_view(svc: MemberService):
     print("\n=== SEARCH MEMBER ===")

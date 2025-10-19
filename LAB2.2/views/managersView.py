@@ -1,26 +1,18 @@
-# ============================================
-# File: views/managersView.py
-# Description: Giao diện (VIEW) để quản lý MANAGER trong hệ thống
-# Chỉ ADMIN (manager cấp cao) mới được thao tác CRUD
-# ============================================
-
 from services.managersService import ManagerService
-from auth import current_user
-
 
 # --------------------------------------------
-# MENU QUẢN LÝ MANAGER
+# MENU QUAN LY MANAGER
 # --------------------------------------------
-def manager_menu(db):
+def manager_menu(db, current_user):
     svc = ManagerService(db)
 
-    # Kiểm tra quyền truy cập (chỉ ADMIN được vào menu này)
-    if not current_user or current_user.get("role") != "admin":
-        print("⚠️ Access denied! Only ADMIN can manage managers.")
+    # Kiem tra quyen truy cap --- Chi co manager moi duoc truy cap menu nay 
+    if not current_user or current_user.get("role") != "manager":
+        print("Access denied! Only MANAGER can manage managers.")
         return
 
     while True:
-        print("\n=== 🧑‍💼 MANAGER MANAGEMENT MENU ===")
+        print("\n=== MANAGER MANAGEMENT MENU ===")
         print("1. Add manager")
         print("2. Update manager")
         print("3. Delete manager")
@@ -33,7 +25,7 @@ def manager_menu(db):
 
         try:
             # --------------------------------------------
-            # THÊM MỘT MANAGER MỚI
+            # THEM MOT MANAGER MOI
             # --------------------------------------------
             if choice == "1":
                 data = {
@@ -48,7 +40,7 @@ def manager_menu(db):
                 svc.add_manager(data)
 
             # --------------------------------------------
-            # CẬP NHẬT THÔNG TIN MANAGER
+            # CAP NHAP THONG TIN MANAGER
             # --------------------------------------------
             elif choice == "2":
                 manager_id = input("Manager ID to update: ").strip()
@@ -79,7 +71,7 @@ def manager_menu(db):
                 svc.update_manager(data)
 
             # --------------------------------------------
-            # XÓA MỘT MANAGER
+            # XOA MOT MANAGER
             # --------------------------------------------
             elif choice == "3":
                 manager_id = input("Manager ID to delete: ").strip()
@@ -87,10 +79,10 @@ def manager_menu(db):
                 if confirm == "y":
                     svc.delete_manager(manager_id)
                 else:
-                    print("❎ Cancelled.")
+                    print("Cancelled.")
 
             # --------------------------------------------
-            # TÌM KIẾM MANAGER THEO ID
+            # TIM KIEM MANAGER THEO ID
             # --------------------------------------------
             elif choice == "4":
                 manager_id = input("Enter Manager ID to search: ").strip()
@@ -109,12 +101,12 @@ def manager_menu(db):
                     print("Manager not found.")
 
             # --------------------------------------------
-            # HIỂN THỊ DANH SÁCH TẤT CẢ MANAGER
+            # HIEN THI DANH SACH TAT CA MANAGER
             # --------------------------------------------
             elif choice == "5":
                 managers = svc.get_all_managers()
                 if managers:
-                    print("\n=== 📋 MANAGER LIST ===")
+                    print("\n=== MANAGER LIST ===")
                     for m in managers:
                         print(
                             f"ID: {m['manager_id']}, "
@@ -125,10 +117,10 @@ def manager_menu(db):
                             f"Created at: {m.get('created_at', 'N/A')}"
                         )
                 else:
-                    print("📭 No managers found.")
+                    print("No managers found.")
 
             # --------------------------------------------
-            # KIỂM TRA ĐĂNG NHẬP MANAGER (HASH CHECK)
+            # KIEM TRA DANG NHAP MANAGER (HASH CHECK)
             # --------------------------------------------
             elif choice == "6":
                 print("\n=== MANAGER LOGIN ===")
@@ -137,7 +129,7 @@ def manager_menu(db):
                 svc.login(username, password)
 
             # --------------------------------------------
-            # THOÁT KHỎI MENU
+            # THOAT KHOI MENU MENU
             # --------------------------------------------
             elif choice == "0":
                 break

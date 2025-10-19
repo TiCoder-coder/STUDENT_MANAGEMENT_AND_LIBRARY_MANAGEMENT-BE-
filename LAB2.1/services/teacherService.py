@@ -133,4 +133,3 @@ class TeacherService:
         except Exception as e:
             print(f"[SERVICE ERROR] Error during teacher login: {e}")
             return False
-

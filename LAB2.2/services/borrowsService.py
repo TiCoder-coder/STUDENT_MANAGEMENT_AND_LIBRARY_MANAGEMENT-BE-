@@ -1,25 +1,24 @@
-# FILE: services/borrowsService.py
 from models.borrowsModel import Borrow
 from auth import require_manager  # Goi ham kiem tra quyen (chi manager duoc muon/tra sach)
 
 # CLASS BORROWSSERVICE: GỌI LẠI CÁC HÀM CỦA MODEL VÀ THỰC THI NÓ CÓ KIỂM TRA QUYỀN -----------------------------
 class BorrowsService:
 
-    # Khởi tạo service
+    # Khoi tao service
     def __init__(self, db):
         self.db = db
 
-    # GỌI HÀM THÊM BORROW (mượn sách) --- CHỈ MANAGER MỚI ĐƯỢC GỌI
+    # Ham dung de tao ra mot borrow, ham nay se goi lai ham tao o model va them phan quyen  --- Chi co manager moi duoc tao
     def add_borrow(self, data: dict):
         try:
-            # 1. Kiểm tra quyền
+            # Kiem tra quyen truy cap
             try:
                 require_manager()
             except PermissionError as e:
                 print(f"[AUTH ERROR] {e}")
                 return
 
-            # 2. Kiểm tra dữ liệu đầu vào
+            # Kiem tra du lieu dau vao
             member_id = data.get("member_id")
             book_id = data.get("book_id")
             borrow_date = data.get("borrow_date")
@@ -30,7 +29,7 @@ class BorrowsService:
                 print("[VALIDATION ERROR] member_id, book_id, and due_date are required.")
                 return
 
-            # 3. Tạo đối tượng Borrow
+            # Tao mot doi tuong borrow voi cac thong tin o tren de them vao db
             borrow = Borrow(
                 member_id=member_id,
                 book_id=book_id,
@@ -39,14 +38,14 @@ class BorrowsService:
                 return_date=return_date
             )
 
-            # 4. Gọi model để thêm borrow
+            # Goi ham o service de thuc thi
             result = borrow.add_borrow(self.db)
             print(result)
 
         except Exception as e:
             print(f"[SERVICE ERROR] Failed to add borrow: {e}")
 
-    # GỌI HÀM TÌM KIẾM BORROW THEO ID HOẶC MEMBER, BOOK --- HÀM MỞ, AI CŨNG DÙNG ĐƯỢC
+    # Ham dung de tim kiem mot cuon sach ham nay se goi lai search_borrows o model
     def search_borrows(self, borrow_id=None, member_id=None, book_id=None, overdue_only=False):
         try:
             if not any([borrow_id, member_id, book_id, overdue_only]):
@@ -64,7 +63,7 @@ class BorrowsService:
                 print("[INFO] No borrow records found.")
                 return
 
-            # In header
+            # In ra cac headler de dep hon
             print("\n{:<10} {:<10} {:<10} {:<12} {:<12} {:<12} {:<15} {:<15}".format(
                 "BorrowID", "MemberID", "BookID", "BorrowDate", "DueDate", "ReturnDate", "MemberName", "BookTitle"
             ))
@@ -87,7 +86,7 @@ class BorrowsService:
         except Exception as e:
             print(f"[SERVICE ERROR] Failed to search borrows: {e}")
 
-    # GỌI HÀM LẤY TẤT CẢ BORROWS --- HÀM MỞ
+    # Ham dung de lay tat ca thong tin cua borrow 
     def list_borrows(self):
         try:
             rows = Borrow.get_all_borrows(self.db)
@@ -115,7 +114,7 @@ class BorrowsService:
         except Exception as e:
             print(f"[SERVICE ERROR] Failed to list borrows: {e}")
 
-    # GỌI HÀM CẬP NHẬT BORROW --- CHỈ MANAGER ĐƯỢC GỌI
+    # Ham dung de goi update_borrow o model va thuc hien them phan quyen (Chi co manager moi duoc thuc hien)
     def update_borrow(self, borrow_id, data: dict):
         try:
             try:
@@ -139,7 +138,7 @@ class BorrowsService:
         except Exception as e:
             print(f"[SERVICE ERROR] Failed to update borrow: {e}")
 
-    # GỌI HÀM TRẢ SÁCH --- CHỈ MANAGER ĐƯỢC GỌI
+    # Goi ham return_book o model (chi co manager moi duoc goi)
     def return_book(self, borrow_id, return_date=None):
         try:
             try:
@@ -154,7 +153,7 @@ class BorrowsService:
         except Exception as e:
             print(f"[SERVICE ERROR] Failed to return book: {e}")
 
-    # GỌI HÀM XÓA BORROW --- CHỈ MANAGER ĐƯỢC GỌI
+    # Ham dung de goi ham delete_borrow o model (chi co manager moi duoc goi)
     def delete_borrow(self, borrow_id):
         try:
             try:

@@ -1,6 +1,7 @@
 from views import studentsView, coursesView, enrollementsView, teachersView
 from auth import login, logout, current_user
 
+# HAM DUNG DE DINH NGHIA BANG HIEN THI CHINH CUA STUDENT
 def guest_menu():
     while True:
         print("\n=== STUDENT MANAGEMENT SYSTEM ===")
@@ -28,6 +29,7 @@ def guest_menu():
         else:
             print("Invalid choice.")
 
+# HAM DUNG DE DINH NGHIA BANG HIEN THI CHINH CUA TEACHER
 def teacher_main_menu():
     while True:
         print("\n=== TEACHER MANAGEMENT ===")
@@ -40,7 +42,7 @@ def teacher_main_menu():
         print("5. Logout")
         print("0. Back to Guest Mode")
         choice = input("Select: ")
-
+        
         if choice == "1":
             coursesView.course_menu()
         elif choice == "2":

@@ -1,4 +1,3 @@
-# services/membersService.py
 from models.membersModel import Member
 from auth import require_manager  # Goi ham kiem tra quyen tu auth de kiem tra
 

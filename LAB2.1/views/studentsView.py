@@ -1,8 +1,8 @@
 from services.studentsServices import StudentService
 from auth import current_user, require_teacher
 
-def student_menu(db, search_student=False):
-    svc = StudentService(db)
+def student_menu(service, current_user):
+    svc = service
 
     # STUDENT MODE
     if not current_user or not isinstance(current_user, dict) or current_user.get("role") != "teacher":
@@ -78,7 +78,7 @@ def add_student_view(svc: StudentService):
     }
     svc.add_student(data)
 
-
+# Menu khi muon cap nhap thong tin cua student
 def update_student_view(svc: StudentService):
     print("\n=== UPDATE STUDENT ===")
     data = {
@@ -91,15 +91,18 @@ def update_student_view(svc: StudentService):
     }
     svc.update_student(data)
 
-
+# Menu khi muon xoa thong tin cua student 
 def delete_student_view(svc: StudentService):
     print("\n=== DELETE STUDENT ===")
     student_id = input("Enter student ID to delete: ").strip()
     svc.delete_student(student_id)
 
 
+# Menu khi muon tim kiem thong tin cua student
 def search_student_view(svc: StudentService):
     print("\n=== SEARCH STUDENT ===")
+    
+    # Nhap id muon xoa vao va goi ham kiem tra ton tai
     student_id = input("Enter student ID: ").strip()
     result = svc.search_student(str(student_id).strip())
 

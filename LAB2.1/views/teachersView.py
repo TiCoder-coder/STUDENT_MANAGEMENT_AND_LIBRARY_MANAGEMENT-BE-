@@ -2,12 +2,12 @@ from services.teacherService import TeacherService
 from auth import require_teacher, current_user
 
 
-def teacher_menu(db, current_user):
+def teacher_menu(service, current_user):
     # Kiem tra quyen teacher
     if not require_teacher():
         return
 
-    svc = TeacherService(db)
+    svc = service
 
     while True:
         print("\n=== TEACHER MANAGEMENT MENU ===")
@@ -75,7 +75,7 @@ def teacher_menu(db, current_user):
                             f"Password: {t['password']}"
                         )
                 else:
-                    print("📭 No teachers found.")
+                    print("No teachers found.")
             
             # Cap nhap giao vien
             elif choice == "2":

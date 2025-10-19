@@ -1,38 +1,31 @@
-# models/borrowsModel.py
 from datetime import datetime, date
 from enums.enums import BookStatus
 
-# CLASS BORROW: DÙNG ĐỂ QUẢN LÝ THÔNG TIN MƯỢN/TRẢ SÁCH -------------------------------------------------------------
+# CLASS BORROW: DUNG DE QUAN LY THONG TIN MUON/TRA SACH -------------------------------------------------------------
 class Borrow:
-    """
-    Borrow model quản lý bảng borrows.
-    Các phương thức tuân theo convention trả về:
-      - "[SUCCESS] ..." hoặc "[ERROR] ..." cho các thao tác CRUD,
-      - True/False cho các hàm xóa/không thành công,
-      - danh sách dict cho các truy vấn.
-    """
-
+    
+    # Khoi tao cac thuoc tinh cho Borrrow
     def __init__(self, member_id, book_id, borrow_date=None, due_date=None, return_date=None, borrow_id=None):
         self.borrow_id = borrow_id
         self.member_id = member_id
         self.book_id = book_id
-        # Nếu không truyền borrow_date -> mặc định là ngày hiện tại
+        # Neu khong truyen borrow_date -> mac đinh la ngay hien tai
         self.borrow_date = borrow_date or date.today().strftime("%Y-%m-%d")
-        # due_date bắt buộc nên truyền khi tạo; nhưng vẫn cho mặc định None để linh hoạt
+        # due_date bat buôc nen truyen khi tao; mac đinh None đe linh hoat
         self.due_date = due_date
         self.return_date = return_date
 
-    # Hàm helper: parse input (str/date) -> date object
+    # Ham helper: parse input (str/date) -> date object
     @staticmethod
     def _to_date(d):
         if d is None:
             return None
         if isinstance(d, date):
             return d
-        # nếu truyền datetime
+        # neu truyen datetime
         if isinstance(d, datetime):
             return d.date()
-        # cố gắng parse từ string yyyy-mm-dd hoặc yyyy-mm-dd HH:MM:SS
+        # parse tU string yyyy-mm-dd hoac yyyy-mm-dd HH:MM:SS
         try:
             # Try full datetime first
             dt = datetime.strptime(d, "%Y-%m-%d %H:%M:%S")
@@ -47,28 +40,28 @@ class Borrow:
     # Ham dung de them mot borrow (muon sach) ---------------------------------------------------------------------------------
     def add_borrow(self, db):
         try:
-            # 1) Kiểm tra borrow_id (nếu có) đã tồn tại chưa
+            # Kiem tra borrow_id --- Neu ton tai -> False
             if self.borrow_id:
                 existing = db.fetch_one("SELECT * FROM borrows WHERE borrow_id=%s", (self.borrow_id,))
                 if existing:
                     return "[ERROR] Borrow ID already exists."
 
-            # 2) Kiểm tra member_id tồn tại
+            # Kiem tra memberId co ton tai khong --- Neu co -> Dung
             member = db.fetch_one("SELECT * FROM members WHERE member_id=%s", (self.member_id,))
             if not member:
                 return "[ERROR] Member ID not found."
 
-            # 3) Kiểm tra book_id tồn tại
+            # Kiem tra bookId xem co ton tai khong --- Neu co -> Dung
             book = db.fetch_one("SELECT * FROM books WHERE book_id=%s", (self.book_id,))
             if not book:
                 return "[ERROR] Book ID not found."
 
-            # 4) Kiểm tra sách hiện có trạng thái có sẵn (AVAILABLE)
-            # Nếu status != AVAILABLE -> lỗi (đã bị mượn hoặc trạng thái khác)
+            # Kiem tra sach co dang o trang thai available khong
+            # Nếu status != available -> loi
             if int(book.get("status", 0)) != BookStatus.AVAILABLE.value:
                 return "[ERROR] Book is not available for borrowing."
 
-            # 5) Kiểm tra ngày (borrow_date, due_date)
+            # Kiem tra ngay
             b_date = self._to_date(self.borrow_date)
             if b_date is None:
                 return "[ERROR] Invalid borrow_date format. Use YYYY-MM-DD or YYYY-MM-DD HH:MM:SS."
@@ -86,7 +79,7 @@ class Borrow:
             if d_date <= today:
                 return "[ERROR] due_date must be greater than current date."
 
-            # 6) Nếu return_date được cung cấp (không bắt buộc khi tạo borrow), kiểm tra nằm trong khoảng
+            # Ngay muon <= Ngay tra <= Ngay doi
             if self.return_date:
                 r_date = self._to_date(self.return_date)
                 if r_date is None:
@@ -94,7 +87,7 @@ class Borrow:
                 if not (b_date <= r_date <= d_date):
                     return "[ERROR] return_date must be between borrow_date and due_date."
 
-            # 7) Thêm bản ghi borrow vào DB
+            # Them vao database
             sql = """
                 INSERT INTO borrows (member_id, book_id, borrow_date, due_date, return_date)
                 VALUES (%s, %s, %s, %s, %s)
@@ -108,7 +101,7 @@ class Borrow:
             )
             db.execute_query(sql, params)
 
-            # 8) Cập nhật trạng thái sách -> BORROWED
+            # Neu muon thi cap nhap lai trang thai cua sach la da muon
             db.execute_query("UPDATE books SET status=%s WHERE book_id=%s", (BookStatus.BORROWED.value, int(self.book_id)))
 
             return "[SUCCESS] Borrow record added successfully!"
@@ -124,18 +117,23 @@ class Borrow:
                   "LEFT JOIN books bo ON b.book_id = bo.book_id WHERE "
             params, conditions = [], []
 
+            # Borrrow_id
             if borrow_id:
                 conditions.append("b.borrow_id=%s")
                 params.append(borrow_id)
+            
+            # Member_id
             if member_id:
                 conditions.append("b.member_id=%s")
                 params.append(member_id)
+            
+            # Book_id
             if book_id:
                 conditions.append("b.book_id=%s")
                 params.append(book_id)
 
+            # Due
             if overdue_only:
-                # Borrows with no return_date and due_date < today
                 conditions.append("b.return_date IS NULL AND b.due_date < %s")
                 params.append(date.today().strftime("%Y-%m-%d"))
 
@@ -163,12 +161,12 @@ class Borrow:
     @staticmethod
     def update_borrow(db, borrow_id, member_id=None, book_id=None, borrow_date=None, due_date=None, return_date=None):
         try:
-            # 1) Kiểm tra tồn tại borrow
+            # Kiem tra xem borrow co ton tai khong
             existing = db.fetch_one("SELECT * FROM borrows WHERE borrow_id=%s", (borrow_id,))
             if not existing:
                 return "[ERROR] Borrow ID not found."
 
-            # 2) Nếu đổi book_id -> kiểm tra book tồn tại & phải có trạng thái AVAILABLE (trừ khi book_id bằng book hiện tại)
+            # Neu đoi book_id -> kiem tra book tôn tai & phai co trang thai AVAILABLE (tru khi book_id bang book hien tai)
             if book_id is not None and int(book_id) != int(existing["book_id"]):
                 new_book = db.fetch_one("SELECT * FROM books WHERE book_id=%s", (book_id,))
                 if not new_book:
@@ -176,13 +174,13 @@ class Borrow:
                 if int(new_book.get("status", 0)) != BookStatus.AVAILABLE.value:
                     return "[ERROR] New book is not available for borrowing."
 
-            # 3) Nếu đổi member_id -> kiểm tra tồn tại
+            # 3) Neu đoi member_id -> kiem tra ton tai
             if member_id is not None:
                 mem = db.fetch_one("SELECT * FROM members WHERE member_id=%s", (member_id,))
                 if not mem:
                     return "[ERROR] Member ID not found."
 
-            # 4) Kiểm tra ngày hợp lệ nếu có truyền
+            # Kiem tra ngay hop le neu nhap vao
             b_date = Borrow._to_date(borrow_date) if borrow_date else Borrow._to_date(existing.get("borrow_date"))
             d_date = Borrow._to_date(due_date) if due_date else Borrow._to_date(existing.get("due_date"))
             r_date = Borrow._to_date(return_date) if return_date else Borrow._to_date(existing.get("return_date"))
@@ -200,7 +198,7 @@ class Borrow:
                 if not (b_date <= r_date <= d_date):
                     return "[ERROR] return_date must be between borrow_date and due_date."
 
-            # 5) Build update fields
+            # Neu co thong tin can cap nhap thi luu tru vao 2 list va cap nhap 1 lan
             fields, params = [], []
             if member_id is not None:
                 fields.append("member_id=%s"); params.append(int(member_id))
@@ -220,14 +218,13 @@ class Borrow:
             params.append(borrow_id)
             db.execute_query(sql, tuple(params))
 
-            # 6) Nếu đổi book_id thì cần cập nhật trạng thái sách cũ -> AVAILABLE, sách mới -> BORROWED
             if book_id is not None and int(book_id) != int(existing["book_id"]):
                 # old book -> available
                 db.execute_query("UPDATE books SET status=%s WHERE book_id=%s", (BookStatus.AVAILABLE.value, int(existing["book_id"])))
                 # new book -> borrowed
                 db.execute_query("UPDATE books SET status=%s WHERE book_id=%s", (BookStatus.BORROWED.value, int(book_id)))
 
-            # 7) Nếu set return_date (người trả) -> cập nhật trạng thái sách -> AVAILABLE
+            # Neu set return_date (nguoi tre) -> cap nhap trang thai sach -> AVAILABLE
             if return_date is not None:
                 db.execute_query("UPDATE books SET status=%s WHERE book_id=%s", (BookStatus.AVAILABLE.value, int(existing["book_id"] if book_id is None else book_id)))
 
@@ -251,19 +248,21 @@ class Borrow:
             b_date = Borrow._to_date(rec.get("borrow_date"))
             d_date = Borrow._to_date(rec.get("due_date"))
 
-            # return_date phải nằm trong khoảng [borrow_date, due_date]
+            # return_date phai nam trong khoang [borrow_date, due_date]
             if not (b_date <= r_date <= d_date):
-                # Nếu trả sau due_date -> thông báo quá hạn nhưng vẫn cho phép cập nhật return_date
+                
+                # Neu tra sau due_date -> thong bao qua han nhung van cho phep cap nhap return_date
                 if r_date > d_date:
+                    
                     # Cập nhật return_date nhưng trả về cảnh báo quá hạn
                     db.execute_query("UPDATE borrows SET return_date=%s WHERE borrow_id=%s", (r_date.strftime("%Y-%m-%d"), borrow_id))
-                    # Cập nhật trạng thái sách -> AVAILABLE
+                    # Cap nhap return_date nhung tra ve canh bao qua han
                     db.execute_query("UPDATE books SET status=%s WHERE book_id=%s", (BookStatus.AVAILABLE.value, int(rec["book_id"])))
                     return "[INFO] Book returned but was overdue. Please handle fines/notifications."
                 else:
                     return "[ERROR] return_date must be on or after borrow_date."
 
-            # Nếu hợp lệ -> cập nhật return_date và trạng thái sách
+            # Neu hop le -> cap nhap return_date va trang thai sach
             db.execute_query("UPDATE borrows SET return_date=%s WHERE borrow_id=%s", (r_date.strftime("%Y-%m-%d"), borrow_id))
             db.execute_query("UPDATE books SET status=%s WHERE book_id=%s", (BookStatus.AVAILABLE.value, int(rec["book_id"])))
 
@@ -279,7 +278,7 @@ class Borrow:
             if not rec:
                 return False
 
-            # Nếu sách chưa được trả (return_date IS NULL) -> khi xóa cần cập nhật trạng thái sách về AVAILABLE
+            # Neu sach chua đươc tra (return_date IS NULL) -> khi xoa can cap nhap trang thai sach ve AVAILABLE
             if rec.get("return_date") is None:
                 db.execute_query("UPDATE books SET status=%s WHERE book_id=%s", (BookStatus.AVAILABLE.value, int(rec["book_id"])))
 

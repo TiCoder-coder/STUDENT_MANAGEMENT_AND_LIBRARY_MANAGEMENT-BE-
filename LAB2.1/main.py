@@ -27,7 +27,7 @@ def main_menu(db):
         print("2. View Courses")
         print("3. View Enrollments")
         print("4. Teacher Management (Require Login)")
-        if current_user["role"]:  # Chỉ hiện khi đã login
+        if current_user["role"]:  # Chi hien khi da login
             print("5. Logout")
         print("0. Exit")
 
@@ -35,17 +35,12 @@ def main_menu(db):
         print()
 
         try:
-            # STUDENT
             if choice == '1':
                 student_menu(student_service, current_user)
-
             elif choice == "2":
                 course_menu(course_service, current_user)
-
             elif choice == '3':
                 enrollment_menu(enrollment_service, current_user)
-
-            # TEACHER
             elif choice == '4':
                 if not current_user["role"]:
                     print("Teacher login required.")
@@ -67,31 +62,28 @@ def main_menu(db):
                     elif sub_choice == "2":
                         course_menu(course_service, current_user)
                     elif sub_choice == "3":
-                        enrollment_menu(db, current_user)
-
+                        enrollment_menu(enrollment_service, current_user)
                     elif sub_choice == "4":
-                        teacher_menu(db, current_user)
+                        teacher_menu(teacher_service, current_user)
                     elif sub_choice == "0":
                         break
                     else:
                         print("Invalid choice, please try again.")
 
-            # LOGOUT
-                logout()
+                logout()  # Logout sau khi back
 
-            # EXIT
+            elif choice == '5' and current_user["role"]:
+                logout()
             elif choice == '0':
                 print("Goodbye!")
                 break
-
             else:
                 print("Invalid choice, please try again.")
-
         except Exception as e:
             print(f"Error in main menu: {e}")
 
 
 if __name__ == "__main__":
     db = Database()
-    print("💾 Database connected successfully.")
+    print("Database connected successfully.")
     main_menu(db)

@@ -1,4 +1,3 @@
-# models/membersModel.py
 import re
 from datetime import datetime, date
 
@@ -15,9 +14,6 @@ NHA_MANG_DI_DONG = {
 
 # HAM CHUAN HOA HO TEN -----------------------------------------------------------------------------------------------
 def chuan_hoa_ho_ten(ten_raw: str) -> str:
-    """
-    Chuẩn hoá họ tên: loại bỏ khoảng trắng thừa, viết hoa chữ cái đầu mỗi từ.
-    """
     if not ten_raw:
         return ""
     words = ten_raw.strip().split()
@@ -25,9 +21,6 @@ def chuan_hoa_ho_ten(ten_raw: str) -> str:
 
 # HAM KIEM TRA EMAIL (THEO MAU FILE MAU: CHI NHAN GMAIL) --------------------------------------------------------------
 def kiem_tra_email_hop_le(email: str) -> bool:
-    """
-    Kiểm tra email hợp lệ theo pattern (ví dụ: chỉ chấp nhận *@gmail.com như file mẫu).
-    """
     if not email:
         return False
     pattern = r'^[A-Za-z0-9._%+-]+@gmail\.com$'
@@ -35,34 +28,26 @@ def kiem_tra_email_hop_le(email: str) -> bool:
 
 # HAM KIEM TRA SO DIEN THOAI ------------------------------------------------------------------------------------------
 def kiem_tra_so_dien_thoai(sdt: str) -> dict:
-    """
-    Chuẩn hoá và kiểm tra số điện thoại.
-    Trả về dict:
-      - valid: True/False
-      - sdt_chuan_hoa: số đã chuẩn hoá (vd: 0335052899)
-      - nha_mang: tên nhà mạng nếu xác định được
-      - reason: lý do không hợp lệ nếu có
-    """
     if not sdt:
-        return {'valid': False, 'reason': 'Số điện thoại rỗng.'}
+        return {'valid': False, 'reason': 'Empty phone number.'}
 
-    # Loại bỏ ký tự không phải số
+    # Loai bo ki tu khong phai so
     s = re.sub(r'\D', '', sdt)
 
-    # Nếu bắt đầu với 84 (mã quốc gia VN) -> chuyển về dạng 0xxxxxxxxx
+    # Neu bat dau bang 84 -> Chuyen 0
     if s.startswith('84') and len(s) >= 11:
         s = '0' + s[2:]
 
-    # Kiểm tra độ dài và bắt đầu bằng 0
+    # Kiem tra do dai va bat dau bang 0
     if not s.startswith('0') or len(s) != 10:
-        return {'valid': False, 'reason': 'Số điện thoại phải có 10 chữ số và bắt đầu bằng 0.'}
+        return {'valid': False, 'reason': 'Phone number must be 10 digits and start with 0.'}
 
     dau = s[:3]
     for ten_mang, dau_list in NHA_MANG_DI_DONG.items():
         if dau in dau_list:
             return {'valid': True, 'sdt_chuan_hoa': s, 'nha_mang': ten_mang}
 
-    # Nếu đầu số 02* -> có thể là máy bàn
+    # Neu bat dau la 02 --> May ban
     if dau.startswith('02'):
         return {'valid': True, 'sdt_chuan_hoa': s, 'nha_mang': 'Máy bàn'}
 
@@ -86,16 +71,16 @@ class Member:
     # Ham them 1 member moi vao database ---------------------------------------------------------------------------------
     def add_member(self, db):
         try:
-            # 1) Kiểm tra nếu có member_id truyền vào -> xem có tồn tại
+            # Kiem tra member_id --- Neu ton tai -> False
             if self.member_id:
                 ex = db.fetch_one("SELECT * FROM members WHERE member_id=%s", (self.member_id,))
                 if ex:
                     print(f"[ERROR] Member ID '{self.member_id}' already exists.")
                     return
 
-            # 2) Kiểm tra định dạng ngày sinh (birthday) và không được lớn hơn hiện tại
+            # Kiem tra dinh dang cho birthday
             try:
-                # Cho phép truyền string 'YYYY-MM-DD' hoặc datetime object
+
                 if isinstance(self.birthday, str):
                     dob = datetime.strptime(self.birthday, "%Y-%m-%d")
                 elif isinstance(self.birthday, datetime):
@@ -110,24 +95,24 @@ class Member:
                 print("[ERROR] Invalid birthday format. Use 'YYYY-MM-DD'.")
                 return
 
-            # 3) Kiểm tra email hợp lệ
+            # Kiem tra email hop le
             if not kiem_tra_email_hop_le(self.email):
                 print(f"[ERROR] Invalid email '{self.email}'. Must be a valid Gmail address.")
                 return
 
-            # 4) Kiểm tra số điện thoại
+            # Kiem tra so dien thoai
             sdt_info = kiem_tra_so_dien_thoai(self.phoneNumber)
             if not sdt_info.get('valid'):
                 print(f"[ERROR] Invalid phone number '{self.phoneNumber}': {sdt_info.get('reason')}")
                 return
 
-            # 5) Kiểm tra email có bị trùng trong DB không
+            # Kiem tra email co bi trung khong
             exists_email = db.fetch_one("SELECT * FROM members WHERE email=%s", (self.email,))
             if exists_email:
                 print(f"[ERROR] Email '{self.email}' already exists.")
                 return
 
-            # 6) Thực hiện insert
+            # Thuc hien insert
             db.execute_query("""
                 INSERT INTO members (name, birthday, email, phoneNumber, created_at)
                 VALUES (%s, %s, %s, %s, %s)
@@ -150,12 +135,17 @@ class Member:
             sql = "SELECT * FROM members WHERE "
             params, conditions = [], []
 
+            # Member_id
             if member_id:
                 conditions.append("member_id=%s")
                 params.append(member_id)
+            
+            # Name
             if name:
                 conditions.append("name LIKE %s")
                 params.append(f"%{name}%")
+            
+            # Email
             if email:
                 conditions.append("email=%s")
                 params.append(email)
@@ -191,13 +181,13 @@ class Member:
                 print(f"[ERROR] Member ID '{self.member_id}' not found.")
                 return
 
-            # Lấy giá trị mới hoặc giữ nguyên nếu không truyền
+            # Lay gia tri moi (neu co)
             new_name = chuan_hoa_ho_ten(self.name or current.get('name'))
             new_birthday_raw = self.birthday or current.get('birthday')
             new_email = self.email or current.get('email')
             new_phone_raw = self.phoneNumber or current.get('phoneNumber')
 
-            # Kiểm tra birthday
+            # Kiem tra dinh dang cho birthday
             try:
                 if isinstance(new_birthday_raw, str):
                     dob = datetime.strptime(new_birthday_raw, "%Y-%m-%d")
@@ -213,25 +203,25 @@ class Member:
                 print("[ERROR] Invalid birthday format. Use 'YYYY-MM-DD'.")
                 return
 
-            # Kiểm tra email
+            # Kiem tra email
             if not kiem_tra_email_hop_le(new_email):
                 print(f"[ERROR] Invalid email '{new_email}'.")
                 return
 
-            # Nếu email thay đổi thì kiểm tra trùng
+            # Neu email thay doi thi kiem tra xem co bi trung khong
             if new_email != current.get('email'):
                 e_exists = db.fetch_one("SELECT * FROM members WHERE email=%s", (new_email,))
                 if e_exists:
                     print(f"[ERROR] Email '{new_email}' already in use.")
                     return
 
-            # Kiểm tra số điện thoại
+            # Kiem tra so dien thoai
             sdt_info = kiem_tra_so_dien_thoai(new_phone_raw)
             if not sdt_info.get('valid'):
                 print(f"[ERROR] Invalid phone number: {sdt_info.get('reason')}")
                 return
 
-            # Thực hiện update
+            # Thuc hien update
             db.execute_query("""
                 UPDATE members
                 SET name=%s, birthday=%s, email=%s, phoneNumber=%s

@@ -2,7 +2,7 @@ import re
 import bcrypt
 from datetime import datetime
 
-# DANH SÁCH CÁC NHÀ MẠNG PHỔ BIẾN DÙNG ĐỂ KIỂM TRA SỐ ĐIỆN THOẠI CÓ HỢP LỆ KHÔNG ----------------------------------------
+# DANH SACH CAC NHA MANG PHO BIEN DUNG ĐE KIEM TRA SO ĐIEN THOAI CO HOP LE KHONG ----------------------------------------
 NHA_MANG_DI_DONG = {
     'Viettel': ('096', '097', '098', '086', '032', '033', '034', '035', '036', '037', '038', '039'),
     'MobiFone': ('090', '093', '089', '070', '079', '077', '076', '078'),
@@ -13,17 +13,17 @@ NHA_MANG_DI_DONG = {
     'Wintel': ('055',)
 }
 
-# HÀM CHUẨN HÓA HỌ TÊN ĐỂ VIẾT HOA ĐÚNG CHỮ CÁI ĐẦU ---------------------------------------------------------------------
+# HAM CHUÂA HOA HO TEN ĐE VIET HOA ĐUNG CU CAI ĐAU ---------------------------------------------------------------------
 def chuan_hoa_ho_ten(ho_ten_raw: str) -> str:
     words = ho_ten_raw.strip().split()
     return " ".join([word.capitalize() for word in words])
 
-# HÀM KIỂM TRA EMAIL CÓ ĐÚNG ĐỊNH DẠNG VÀ PHẢI LÀ GMAIL -----------------------------------------------------------------
+# HAM KIEM TRA EMAIL CO ĐUNG ĐINH DANG VA PHAI LA GMAIL -----------------------------------------------------------------
 def kiem_tra_email(email: str) -> bool:
     pattern = r"^[a-zA-Z0-9._%+-]+@gmail\.com$"
     return re.match(pattern, email) is not None
 
-# HÀM KIỂM TRA SỐ ĐIỆN THOẠI HỢP LỆ VÀ XÁC ĐỊNH NHÀ MẠNG ----------------------------------------------------------------
+# HAM KIEM TRA SO ĐIEN THOAI HOP LE VA XAC ĐINH NHA MANG ----------------------------------------------------------------
 def kiem_tra_so_dien_thoai(sdt: str) -> dict:
     sdt_sach = re.sub(r'\D', '', sdt)
 
@@ -31,22 +31,22 @@ def kiem_tra_so_dien_thoai(sdt: str) -> dict:
         sdt_sach = '0' + sdt_sach[2:]
 
     if not sdt_sach.startswith('0') or len(sdt_sach) != 10:
-        return {'valid': False, 'ly_do': 'SĐT phải có 10 số và bắt đầu bằng 0.'}
+        return {'valid': False, 'reason': 'Phone number must have 10 digits and start with 0.'}
 
     dau_so = sdt_sach[:3]
     for ten_mang, cac_dau_so in NHA_MANG_DI_DONG.items():
         if dau_so in cac_dau_so:
-            return {'valid': True, 'nha_mang': ten_mang, 'sdt_chuan_hoa': sdt_sach}
+            return {'valid': True, 'network': ten_mang, 'sdt_chuan_hoa': sdt_sach}
 
     if dau_so.startswith('02'):
-        return {'valid': True, 'nha_mang': 'Máy bàn', 'sdt_chuan_hoa': sdt_sach}
+        return {'valid': True, 'network': 'Desktop computer', 'sdt_chuan_hoa': sdt_sach}
 
-    return {'valid': False, 'ly_do': f'Đầu số {dau_so} không tồn tại.'}
+    return {'valid': False, 'reason': f'Prefix number {dau_so} was not exited.'}
 
-# CLASS MANAGER: DÙNG ĐỂ QUẢN LÝ CÁC THÔNG TIN CỦA MANAGER TRONG HỆ THỐNG ---------------------------------------------
+# CLASS MANAGER: DUNG ĐE QUAN LY CAC THONG TIN CUA MANAGER TRONG HE THONG ---------------------------------------------
 class Manager:
     
-    # Hàm khởi tạo các thuộc tính cho manager --------------------------------------------------------------------------
+    # Ham khoi tao cac thuoc tinh cho manager --------------------------------------------------------------------------
     def __init__(self, manager_id, full_name, email, username, password, phoneNumber, created_at=None):
         self.manager_id = manager_id
         self.full_name = chuan_hoa_ho_ten(full_name)
@@ -56,37 +56,37 @@ class Manager:
         self.phoneNumber = phoneNumber
         self.created_at = created_at or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # HÀM DÙNG ĐỂ KIỂM TRA TÍNH HỢP LỆ TRƯỚC KHI THÊM MỘT MANAGER -------------------------------------------------------
+    # HAM DUNG ĐE KIEM TRA TINH HOP LE TRƯOC KHI THEM MOT MANAGER -------------------------------------------------------
     def validate(self, db):
-        # Kiểm tra ID đã tồn tại hay chưa
+        # Kiem tra xem id da ton tai hay chua
         existing_id = db.fetch_one("SELECT manager_id FROM managers WHERE manager_id=%s", (self.manager_id,))
         if existing_id:
-            raise ValueError(f"Manager ID '{self.manager_id}' đã tồn tại trong hệ thống.")
+            raise ValueError(f"Manager ID '{self.manager_id}' already exists in the system.")
 
-        # Kiểm tra username có bị trùng hay không
+        # Kiem tra userName co trung khong
         existing_username = db.fetch_one("SELECT username FROM managers WHERE username=%s", (self.username,))
         if existing_username:
-            raise ValueError(f"Username '{self.username}' đã tồn tại, vui lòng chọn tên khác.")
+            raise ValueError(f"Username '{self.username}' already exists in the system.")
 
-        # Kiểm tra email có bị trùng hoặc sai định dạng không
+        # Kiem tra email co trung hay sai dinh dang khong
         existing_email = db.fetch_one("SELECT email FROM managers WHERE email=%s", (self.email,))
         if existing_email:
-            raise ValueError(f"Email '{self.email}' đã tồn tại trong hệ thống.")
+            raise ValueError(f"Email '{self.email}' already exists in the system.")
         if not kiem_tra_email(self.email):
-            raise ValueError("Email không hợp lệ. Phải có dạng hợp lệ và kết thúc bằng @gmail.com.")
+            raise ValueError("Email is not valid. Must be valid and end with @gmail.com.")
 
-        # Kiểm tra số điện thoại hợp lệ
+        # Kiem tra so dien thoai co hop le khong
         kq_sdt = kiem_tra_so_dien_thoai(self.phoneNumber)
         if not kq_sdt["valid"]:
-            raise ValueError(f"Số điện thoại không hợp lệ: {kq_sdt.get('ly_do', 'Không xác định.')}")
+            raise ValueError(f"Invalid phone number: {kq_sdt.get('reason', 'Not determined.')}")
 
-    # HÀM THÊM MỘT MANAGER MỚI VÀO DATABASE ---------------------------------------------------------------------------
+    # HAM DUNG DE THEM MOT MANAGER MOI VAO DATABASE ---------------------------------------------------------------------------
     def add_manager(self, db):
         try:
-            # Kiểm tra hợp lệ trước khi thêm
+            # Kiem tra hop le truoc khi them
             self.validate(db)
 
-            # Hash password trước khi lưu vào database
+            # Hash password truoc khi cap nhap vao database
             hashed_pw = bcrypt.hashpw(self.password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
             sql = """
@@ -97,32 +97,32 @@ class Manager:
                 self.manager_id, self.full_name, self.email, self.username,
                 hashed_pw, self.phoneNumber, self.created_at
             ))
-            print(f"[SUCCESS] Manager '{self.full_name}' đã được thêm thành công!")
+            print(f"[SUCCESS] Manager '{self.full_name}' was added successfully!")
         except Exception as e:
-            raise Exception(f"[ERROR] Không thể thêm Manager: {e}")
+            raise Exception(f"[ERROR] Cannot add Manager: {e}")
 
-    # HÀM TÌM KIẾM MANAGER THEO ID -------------------------------------------------------------------------------------
+    # HAM TIM KIEM MANAGER THEO ID -------------------------------------------------------------------------------------
     @staticmethod
     def search_manager(db, manager_id):
         try:
             sql = "SELECT * FROM managers WHERE manager_id=%s"
             return db.fetch_one(sql, (manager_id,))
         except Exception as e:
-            raise Exception(f"[ERROR] Khi tìm kiếm Manager: {e}")
+            raise Exception(f"[ERROR] Search Manager: {e}")
 
-    # HÀM LẤY TOÀN BỘ DANH SÁCH MANAGER -------------------------------------------------------------------------------
+    # HAM LAY TOAN BO DANH SACH MANAGER -------------------------------------------------------------------------------
     @staticmethod
     def get_all_managers(db):
         try:
             sql = "SELECT * FROM managers ORDER BY created_at DESC"
             return db.fetch_all(sql)
         except Exception as e:
-            raise Exception(f"[ERROR] Khi lấy danh sách Manager: {e}")
+            raise Exception(f"[ERROR] Get list of Manager: {e}")
 
-    # HÀM CẬP NHẬT THÔNG TIN CHO MANAGER -------------------------------------------------------------------------------
+    # HAM CAP NHAP THONG TIN CHO MANAGER -------------------------------------------------------------------------------
     def update_manager(self, db):
         try:
-            # Nếu password được nhập mới → hash lại
+            # Hash password roi cap nhap lai
             hashed_pw = bcrypt.hashpw(self.password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
             sql = """
@@ -133,18 +133,18 @@ class Manager:
             db.execute_query(sql, (
                 self.full_name, self.email, self.username, hashed_pw, self.phoneNumber, self.manager_id
             ))
-            print(f"[SUCCESS] Manager '{self.manager_id}' cập nhật thành công.")
+            print(f"[SUCCESS] Manager '{self.manager_id}' updated successfully.")
         except Exception as e:
-            raise Exception(f"[ERROR] Khi cập nhật Manager: {e}")
+            raise Exception(f"[ERROR] Update Manager: {e}")
 
-    # HÀM XÓA MỘT MANAGER KHỎI DATABASE --------------------------------------------------------------------------------
+    # HAM XOA MOT MANAGER KHOI DATABASE --------------------------------------------------------------------------------
     @staticmethod
     def delete_manager(db, manager_id):
         try:
             check = db.fetch_one("SELECT * FROM managers WHERE manager_id=%s", (manager_id,))
             if not check:
-                raise ValueError(f"Manager ID '{manager_id}' không tồn tại.")
+                raise ValueError(f"Manager ID '{manager_id}' was not existed.")
             db.execute_query("DELETE FROM managers WHERE manager_id=%s", (manager_id,))
-            print(f"[SUCCESS] Manager có ID '{manager_id}' đã được xóa thành công.")
+            print(f"[SUCCESS] Manager has ID '{manager_id}' was deleted successfully.")
         except Exception as e:
-            raise Exception(f"[ERROR] Khi xóa Manager: {e}")
+            raise Exception(f"[ERROR] Delete Manager: {e}")

@@ -1,4 +1,3 @@
-# views/booksView.py
 from services.booksService import BookService
 from enums.enums import (
     BookStatus, BookType,
@@ -6,11 +5,13 @@ from enums.enums import (
 )
 from auth import current_user
 
-
+# MENU CHO BOOK
 def books_menu(db, current_user):
     svc = BookService(db)
 
     while True:
+        
+        # MENU CHO MEMBER
         print("\n=== BOOK MANAGEMENT MENU ===")
 
         if not current_user["role"]:
@@ -28,6 +29,8 @@ def books_menu(db, current_user):
             else:
                 print("Invalid choice, please try again.")
         else:
+            
+            # MENU CHO MANAGER
             print("1. Add Book")
             print("2. Delete Book")
             print("3. Update Book")
@@ -52,15 +55,16 @@ def books_menu(db, current_user):
             else:
                 print("Invalid choice, please try again.")
 
-
+# MENU DUNG DE THEM SACH --- CHI CO MANAGER MOI DUOC SU DUNG
 def add_book_view(svc: BookService):
     print("\n=== ADD NEW BOOK ===")
+    book_id = input("Book id: ").strip()
     title = input("Title: ").strip()
     author = input("Author: ").strip()
     pages = input("Pages: ").strip()
     publish_year = input("Publish Year: ").strip()
 
-    # BookType selection (numbered)
+    # CHON LOAI SACH
     print("\nBook Type Options:")
     book_types = list(BookType)
     for idx, b in enumerate(book_types, start=1):
@@ -77,7 +81,6 @@ def add_book_view(svc: BookService):
     level = None
     field = None
 
-    # Sub-enum selection based on type
     if book_type == BookType.NOVEL:
         print("\n=== NOVEL GENRES ===")
         novel_types = list(BookNovelType)
@@ -121,7 +124,7 @@ def add_book_view(svc: BookService):
         except Exception:
             field = None
 
-    # Status selection (numbered)
+    # CHON STATUS CHO SACH
     print("\nBook Status Options:")
     statuses = list(BookStatus)
     for i, s in enumerate(statuses, 1):
@@ -134,6 +137,7 @@ def add_book_view(svc: BookService):
         status = BookStatus.AVAILABLE
 
     data = {
+        "book_id": book_id,
         "title": title,
         "author": author,
         "pages": pages,
@@ -148,13 +152,14 @@ def add_book_view(svc: BookService):
 
     svc.add_book(data)
 
-
+# MENU CHO DELETE MOT CUON SACH  (CHI MANAGER MOI DUOC THEM)
 def delete_book_view(svc: BookService):
     print("\n=== DELETE BOOK ===")
     book_id = input("Enter Book ID to delete: ").strip()
     svc.delete_book(book_id)
 
 
+# MENU DUNG DE CAP NHAP THONG TIN MOT CUON SACH (CHI MANAGER MOI DUOC THEM)
 def update_book_view(svc: BookService):
     print("\n=== UPDATE BOOK ===")
     book_id = input("Enter Book ID to update: ").strip()
@@ -174,7 +179,7 @@ def update_book_view(svc: BookService):
 
     svc.update_book(book_id, data)
 
-
+# MENU DUNG DE TIM KIEM MOT CUON SACH
 def search_books_view(svc: BookService):
     print("\n=== SEARCH BOOK ===")
     filters = {}
@@ -196,14 +201,12 @@ def search_books_view(svc: BookService):
 
     status = input("Status (number or press Enter to skip): ").strip()
     if status:
-        # allow number -> map to enum value
         try:
             s_idx = int(status)
             statuses = list(BookStatus)
             status_enum = statuses[s_idx - 1]
             filters["status"] = status_enum.value
         except Exception:
-            # maybe user typed name or int as string
             try:
                 filters["status"] = int(status)
             except Exception:
@@ -215,14 +218,12 @@ def search_books_view(svc: BookService):
         print("[INFO] No books found with given filters.")
         return
 
-    # print header
     print("\n{:<5} {:<25} {:<20} {:<10} {:<12} {:<10} {:<12}".format(
         "ID", "Title", "Author", "Pages", "Year", "Type", "Status"
     ))
     print("-" * 100)
 
     for r in results:
-        # r may be dict or tuple
         if isinstance(r, dict):
             bid = r.get("book_id")
             title = r.get("title")
@@ -238,7 +239,7 @@ def search_books_view(svc: BookService):
             str(bid), str(title), str(author), str(pages), str(year), str(btype), str(status)
         ))
 
-
+# MENU CHO LIET KE TAT CA THONG TIN CAC CUON SACH
 def list_books_view(svc: BookService):
     print("\n=== ALL BOOKS ===")
     rows = svc.get_all_books()
@@ -265,17 +266,17 @@ def list_books_view(svc: BookService):
             str(r.get("status"))
         ))
 
-
+# MENU CHO XEM SACH
 def view_books(db):
     try:
         svc = BookService(db)
         rows = svc.get_all_books()
 
         if not rows:
-            print("📭 No books found in the library.")
+            print("No books found in the library.")
             return
 
-        print("\n=== 📚 LIST OF BOOKS ===")
+        print("\n=== LIST OF BOOKS ===")
         print("{:<10} {:<30} {:<20} {:<15}".format("Book ID", "Title", "Author", "Status"))
         print("-" * 75)
         for book in rows:

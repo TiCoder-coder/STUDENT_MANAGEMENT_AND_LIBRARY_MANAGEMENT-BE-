@@ -1,4 +1,3 @@
-# services/managersService.py
 from models.managersModel import Manager
 import bcrypt
 

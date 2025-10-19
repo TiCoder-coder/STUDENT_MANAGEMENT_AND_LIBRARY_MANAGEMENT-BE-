@@ -9,28 +9,22 @@ current_user = {
 
 
 # ---------------------------------------------------------------------------------------------------
-# HÀM ĐĂNG NHẬP HỆ THỐNG
+# HAM DUNG DE DANG  NHAP TREN HE THONG
 # ---------------------------------------------------------------------------------------------------
 def login(db=None):
-    """
-    Cho phép người dùng đăng nhập với username + password.
-    Kiểm tra:
-        - Manager đăng nhập từ .env hoặc database.
-        - Member đăng nhập từ database.
-    """
     global current_user
 
-    # Nếu đã đăng nhập rồi thì không cần login lại
+    # Neu da dang nhap roi thi khong can dang nhap lai
     if current_user.get("username"):
-        print(f"✅ Already logged in as {current_user['username']} ({current_user['role']}).")
+        print(f"Already logged in as {current_user['username']} ({current_user['role']}).")
         return True
 
-    print("\n=== 🔐 LOGIN ===")
+    print("\n=== LOGIN ===")
     username = input("Username: ").strip()
     password = input("Password: ").strip()
 
     try:
-        # --------------------- ĐĂNG NHẬP BẰNG .ENV (MANAGER ADMIN MẶC ĐỊNH) ---------------------
+        # --------------------- DANG NHAP BANG .ENV (MANAGER ADMIN MAC DINH) ---------------------
         env_user = config("USER_NAME", default=None)
         env_pass = config("PASSWORD", default=None)
 
@@ -40,40 +34,40 @@ def login(db=None):
             print(f"[ADMIN LOGIN] Welcome, {username}!")
             return True
 
-        # --------------------- ĐĂNG NHẬP TỪ DATABASE (MANAGER HOẶC MEMBER) ---------------------
+        # --------------------- DANG NHAP TU  DATABASE (MANAGER HOẶC MEMBER) ---------------------
         if db:
             svc = ManagerService(db)
 
-            # Lấy thông tin manager trong database
+            # Lay thong tin manager trong database
             sql_manager = db.fetch_one(
                 "SELECT * FROM managers WHERE username = %s", (username,)
             )
 
-            # Lấy thông tin member trong database
+            # Lay thong tin member trong database
             sql_member = db.fetch_one(
                 "SELECT * FROM members WHERE username = %s", (username,)
             )
 
-            # ---- KIỂM TRA MANAGER ----
+            # ---- KIEM TRA MANAGER ----
             if sql_manager:
                 stored_hash = sql_manager["password"].encode("utf-8")
                 if bcrypt.checkpw(password.encode("utf-8"), stored_hash):
                     current_user["username"] = sql_manager["username"]
                     current_user["role"] = "manager"
-                    print(f"✅ Login successful! Welcome Manager {sql_manager['full_name']}!")
+                    print(f"Login successful! Welcome Manager {sql_manager['full_name']}!")
                     return True
 
-            # ---- KIỂM TRA MEMBER ----
+            # ---- KIEM TRA MEMBER ----
             elif sql_member:
                 stored_hash = sql_member["password"].encode("utf-8")
                 if bcrypt.checkpw(password.encode("utf-8"), stored_hash):
                     current_user["username"] = sql_member["username"]
                     current_user["role"] = "member"
-                    print(f"✅ Login successful! Welcome Member {sql_member['full_name']}!")
+                    print(f"Login successful! Welcome Member {sql_member['full_name']}!")
                     return True
 
-        # Nếu không tìm thấy tài khoản hợp lệ
-        print("❌ Invalid username or password.")
+        # Neu khong tim thay thi tai khoan khong hop le
+        print("Invalid username or password.")
         return False
 
     except Exception as e:
@@ -82,15 +76,12 @@ def login(db=None):
 
 
 # ---------------------------------------------------------------------------------------------------
-# HÀM ĐĂNG XUẤT HỆ THỐNG
+# HAM DUNG DE DANG XUAT
 # ---------------------------------------------------------------------------------------------------
 def logout():
-    """
-    Đăng xuất khỏi hệ thống, reset lại current_user.
-    """
     global current_user
     if current_user["username"]:
-        print(f"👋 Logged out ({current_user['username']}) successfully.")
+        print(f"Logged out ({current_user['username']}) successfully.")
     else:
         print("No user currently logged in.")
     current_user["username"] = None
@@ -98,48 +89,40 @@ def logout():
 
 
 # ---------------------------------------------------------------------------------------------------
-# KIỂM TRA QUYỀN MANAGER (ADMIN)
+# KIEM TRA QUYEN MANAGER (ADMIN)
 # ---------------------------------------------------------------------------------------------------
 def require_manager(db=None):
-    """
-    Dùng để kiểm tra quyền của Manager.
-    Nếu chưa đăng nhập -> yêu cầu login.
-    Nếu không phải Manager -> từ chối quyền truy cập.
-    """
+
     global current_user
 
     if not current_user.get("username"):
-        print("⚠️ This action requires manager login.")
+        print("This action requires manager login.")
         if not login(db):
-            print("🚫 Access denied.")
+            print("Access denied.")
             return False
 
     if current_user.get("role") != "manager":
-        print("🚫 Permission denied: Only managers can perform this action.")
+        print("Permission denied: Only managers can perform this action.")
         return False
 
     return True
 
 
 # ---------------------------------------------------------------------------------------------------
-# KIỂM TRA QUYỀN MEMBER (NGƯỜI DÙNG THƯỜNG)
+# KIEM TRA QUYEN MEMBER 
 # ---------------------------------------------------------------------------------------------------
 def require_member(db=None):
-    """
-    Dùng để kiểm tra quyền của Member.
-    Nếu chưa đăng nhập -> yêu cầu login.
-    Nếu không phải Member -> từ chối quyền truy cập.
-    """
+
     global current_user
 
     if not current_user.get("username"):
-        print("⚠️ This action requires member login.")
+        print("This action requires member login.")
         if not login(db):
-            print("🚫 Access denied.")
+            print("Access denied.")
             return False
 
     if current_user.get("role") != "member":
-        print("🚫 Permission denied: Only members can perform this action.")
+        print("Permission denied: Only members can perform this action.")
         return False
 
     return True
